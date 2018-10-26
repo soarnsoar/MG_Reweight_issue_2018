@@ -1,5 +1,5 @@
-&lt;weight id="1001" MUR="1.0" MUF="1.0" PDF="247000" &gt;  &lt;/weight&gt;
 &lt;weightgroup name="Central scale variation" combine="envelope"&gt;
+&lt;weight id="1001" MUR="1.0" MUF="1.0" PDF="247000" &gt;  &lt;/weight&gt;
 &lt;weight id="1002" MUR="1.0" MUF="1.0" DYN_SCALE="1" PDF="247000" &gt; dyn_scale_choice=sum pt  &lt;/weight&gt;
 &lt;weight id="1003" MUR="1.0" MUF="1.0" DYN_SCALE="2" PDF="247000" &gt; dyn_scale_choice=HT  &lt;/weight&gt;
 &lt;weight id="1004" MUR="1.0" MUF="1.0" DYN_SCALE="3" PDF="247000" &gt; dyn_scale_choice=HT/2  &lt;/weight&gt;
