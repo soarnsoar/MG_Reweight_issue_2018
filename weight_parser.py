@@ -44,6 +44,7 @@ class parser:
     class Group:
         
         title=''
+        isscale=0
         weights=[]
         #idlist=[]
         #pdflist=[]
@@ -77,6 +78,7 @@ class parser:
         self._endweight=name
                                 
     def title_parser(self,title):
+        #print "title="+title
         sptitle=title.split()
         #print sptitle
         mode=0
@@ -102,6 +104,11 @@ class parser:
 
     def weight_parser(self,weight):
         #print weight
+        weight=weight.replace("PDF=    ","PDF=") ##For v242NLO
+        weight=weight.replace("PDF=   ","PDF=") ##For v242NLO
+        weight=weight.replace("PDF=  ","PDF=") ##For v242NLO
+        weight=weight.replace("PDF= ","PDF=") ##For v242NLO
+        #print "weight="+weight
         spweight=weight.split()
         #        print spweight
         #print len(spweight)
@@ -113,43 +120,50 @@ class parser:
                                                 
         
         mode=0 ##mode1=>weight value mode2=>weight name
+        pdfmode=0
         #print spweight
         for part in spweight:
-            #print part+str(mode)
+            
+            # print part+str(mode)
             if self._startweight in part: mode=1
             if self._endweight in part:
                 name+=part
                 name=name.rstrip(self._endweight)
                 mode=0
+
             if mode==1:
 
-                if "MUF=" in part:
+                if ("MUF=" in part) or ("muF" in part):
                     #print "muf"
                     muF=part
+                    muF=muF.lstrip('muF=')
                     muF=muF.lstrip('MUF="')
                     muF=muF.rstrip('"')
                     muF=muF.rstrip(self.ket)
-                if "MUR=" in part:
+                if ("MUR=" in part) or ("muR" in part):
                     muR=part
+                    muR=muR.lstrip('muR=')
                     muR=muR.lstrip('MUR="')
                     muR=muR.rstrip('"')
                     muR=muR.rstrip(self.ket)
-                if "PDF=" in part:
+                if "PDF=" in part and pdfmode==0:
+                    #print "PDF matched="+part
                     pdf=part
                     pdf=pdf.lstrip('PDF="')
                     pdf=pdf.rstrip('"')
                     pdf=pdf.rstrip(self.ket)
+                    pdfmode=1
                 if "id=" in part:
                     id=part
                     id=id.lstrip('id="')
                     id=id.rstrip('"')
                     id=id.rstrip(self.ket)
                     id=id.rstrip('"')
-                if mode==1 and (self.ket in part):
-                    mode=2
-            elif mode==2:
+#                if mode==1 and (self.ket in part):
+#                    mode=2
+#            elif mode==2:
 #                print part+"!!!is after ket"
-                name+=part
+#                name+=part
         name=name.lstrip(self.ket)
         
         new_weight=weightinfo()
@@ -167,8 +181,9 @@ class parser:
         lines=f.readlines()
         mode=0
 
-        for line in lines:
-#            print line
+        for line in lines:            
+            #            print line
+            #print "line="+line
             if mode==3 and ( self._startgroup in line ) :
                 
                 self.Group_list.append(tempGroup)
@@ -176,13 +191,14 @@ class parser:
                 
             if self._startgroup in line:
                 
-
+                
                 title=line
                 newtitle=self.title_parser(title)
                 tempGroup=self.Group()
                 
                 tempGroup.set_title(newtitle)
-                
+                if "scale" in tempGroup.title:
+                    tempGroup.isscale=1
                 mode=1
 
             elif self._endgroup in line:
@@ -273,7 +289,31 @@ def runLO26x():
 #            if int(weight2.id)==i : mode=1
 #        if mode==0 : print i
     return LO26x
+def runNLO242():
+    NLO242=parser()
+    NLO242.set_filename('242NLO.log')
+    NLO242.set_startgroup('<weightgroup')
+    NLO242.set_endgroup('</weightgroup>')
+    NLO242.set_startweight('<weight')
+    NLO242.set_endweight('</weight>')
+                    
+    NLO242.run()
+    Group_list=NLO242.Group_list
 
+    return NLO242
+def runNLO26x():
+    NLO26x=parser()
+    NLO26x.define_braket('&lt;','&gt;')
+    NLO26x.set_filename('v26x_LO_weight_info.txt')
+    NLO26x.set_startgroup('&lt;weightgroup')
+    NLO26x.set_endgroup('&lt;/weightgroup&gt;')
+    NLO26x.set_startweight('&lt;weight')
+    NLO26x.set_endweight('&lt;/weight&gt;')                    
+    NLO26x.run()
+    Group_list=NLO26x.Group_list
+    
+    return NLO26x
+                                    
 def compare_LO():
     LO242=parser()
     LO242.set_filename('v242_LO_weight_info.txt')
@@ -405,7 +445,7 @@ class group_template:
     def set_end_pdf(self,pdf):
         self.end_pdf=pdf
                     
-def define_set(v242_group_list):
+def define_set(v242_group_list):##make template
     groups=[]
 
     for v242group in v242_group_list:
@@ -420,8 +460,16 @@ def define_set(v242_group_list):
             group.set_title("scale_variation")
             group.set_end_pdf(group.start_pdf)
             #            print "isscale"
-        
+        if "unknown" in v242group.title :
+            group.set_title("PDF_"+str(group.start_pdf))
+            
+            
         groups.append(group)
+        #print "##############"
+        #print "title="+group.title
+        #print "start_pdf"+str(group.start_pdf)
+        #print "end_pdf"+str(group.end_pdf)
+        
     return groups
 #def make_template():
 #    LO242=runLO242()
@@ -442,32 +490,44 @@ def define_set(v242_group_list):
     
 def arrange_with_template(sample,template):
     weightlist=[]
+    central_pdf=''
+    for group_t in template:
+        if bool(group_t.isscale): central_pdf=group_t.start_pdf
     for group_t in template:
         ##Let's do for scale variance case
 #        if bool(group_t.isscale) :
             
         for group_s in sample.Group_list:
             for weight_s in group_s.weights:
+                #print "##############"
+                #print "weight_s.pdf="+weight_s.pdf
+                #print "weight_s.id="+str(weight_s.id)
+                #print "group_s.isscale="+str(group_s.isscale)
+                #print "group_t.start_pdf="+group_t.start_pdf
                 if ( "dyn_scale_choice" in weight_s.name ) :
                     continue
-                
-                if( (int(weight_s.pdf) == int(group_t.start_pdf) ) and bool(group_t.isscale) ) :
-
+                if bool(group_s.isscale):###this is for NLO242
+                    weight_s.pdf=central_pdf
+                #     if( (int(weight_s.pdf) == int(group_t.start_pdf) ) and bool(group_t.isscale) ) :
+                if ( bool(group_s.isscale) and bool(group_t.isscale) ):
                     info=weightinfo()
                     info.id=weight_s.id
                     info.pdf=weight_s.pdf
+                    if( info.pdf==''): info.pdf=group_t.start_pdf
                     info.muF=weight_s.muF
                     info.muR=weight_s.muR
-                    info.name="muR_"+str(weight_s.muR)+"_muF_"+str(weight_s.muF)
+                    info.name="scale_variation_muR_"+str(weight_s.muR)+"_muF_"+str(weight_s.muF)
                     weightlist.append(info)
-                    
+                
                 elif( (int(weight_s.pdf) >= int(group_t.start_pdf)) and (int(weight_s.pdf) <= int(group_t.end_pdf)) ):
                     #                    print "pdf replica"+weight_s.name
                     info=weightinfo()
                     info.id=weight_s.id
                     info.pdf=weight_s.pdf
                     info.muF=weight_s.muF
+                    if info.muF=='' : info.muF='1.0'
                     info.muR=weight_s.muR
+                    if info.muR=='' : info.muR='1.0'
                     info.name=group_t.title
                     weightlist.append(info)
     return weightlist
@@ -480,25 +540,53 @@ def check_list(list_):
 def print_list_cpp(list_,version):
 
     for weight in list_:
-        print "LO"+version+"Info.push_back(weightinfo("+'"'+str(weight.id)+'"'+", "+'"'+str(weight.pdf)+'"'+', "'+str(weight.name)+'", '+str(weight.muR)+", "+str(weight.muF)+"));"
+        print version+"Info.push_back(weightinfo("+'"'+str(weight.id)+'"'+", "+'"'+str(weight.pdf)+'"'+', "'+str(weight.name)+'", '+str(float(weight.muR))+", "+str(float(weight.muF))+"));"
 
 
 if __name__ == "__main__":
 
 
-
+    '''
     LO242=runLO242()
     template=define_set(LO242.Group_list)    
     list242=arrange_with_template(LO242,template)
     print "# of elements in v242="+str(len(list242))
     #    check_list(list242)
-    print_list_cpp(list242,"242")
+    print_list_cpp(list242,"LO242")
     LO26x=runLO26x()
     list26x=arrange_with_template(LO26x,template)
     print "# of elements in v26x="+str(len(list26x))
-
+    '''
     #    check_list(list26x)
-#    print_list_cpp(list26x,"26x")
-    
-    
+    #    print_list_cpp(list26x,"LO26x")
 
+    NLO242=runNLO242()
+    #    for group in NLO242.Group_list:
+    #        print "##############"
+    #        print group.title
+    #        for weight in group.weights:
+    #            print "###################"
+    #            print "id="+str(weight.id)
+    #            print "pdf="+weight.pdf
+            
+        
+    NLO26x=runNLO26x()
+#    for group in NLO26x.Group_list:
+ #       print "###############"
+  #      print group.title
+   #     for weight in group.weights:
+    #        print "pdf="+weight.pdf
+        
+    template=define_set(NLO26x.Group_list)
+    #   for group in template:
+    
+    #      print group.title
+    list242=arrange_with_template(NLO242,template)
+
+    list26x=arrange_with_template(NLO26x,template)
+    #   list242=arrange_with_template(NLO242,template)
+    #Group_list2=NLO26x.Group_list
+    #for group in Group_list2:
+    #    print group.title
+    print_list_cpp(list242,"NLO242")
+    print_list_cpp(list26x,"NLO26x")
