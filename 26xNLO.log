@@ -1,7 +1,8 @@
 &lt;weightgroup name="NNPDF31_nnlo_hessian_pdfas" combine="symmhessian+as"&gt; # 306000: Hessian conversion of NNPDF31_nnlo_as_0118_1000, mem=0 central value ; Alphas(MZ)=0.118; mem=1-100 ; PDF eig.; mem=101 ; central value Alphas(MZ)=0.116; mem=102 ; central value Alphas(MZ)=0.120
-&lt;weight id="1001" MUR="1.0" MUF="1.0" PDF="306000" &gt;  &lt;/weight&gt;
+
 &lt;weightgroup name="Central scale variation" combine="envelope"&gt;
 &lt;/weightgroup&gt; PDF 
+&lt;weight id="1001" MUR="1.0" MUF="1.0" PDF="306000" &gt;  &lt;/weight&gt;
 &lt;weight id="1002" MUR="2.0" MUF="1.0" PDF="306000" &gt; MUR=2.0  &lt;/weight&gt;
 &lt;weight id="1003" MUR="0.5" MUF="1.0" PDF="306000" &gt; MUR=0.5  &lt;/weight&gt;
 &lt;weight id="1004" MUR="1.0" MUF="2.0" PDF="306000" &gt; MUF=2.0  &lt;/weight&gt;
