@@ -5,6 +5,7 @@ class weightinfo:
     muF=''
     muR=''
     name=''
+
     def __init__(self):
         self.id=''
         self.pdf=''
@@ -199,6 +200,7 @@ class parser:
                 tempGroup.set_title(newtitle)
                 if "scale" in tempGroup.title:
                     tempGroup.isscale=1
+                    
                 mode=1
 
             elif self._endgroup in line:
@@ -304,7 +306,7 @@ def runNLO242():
 def runNLO26x():
     NLO26x=parser()
     NLO26x.define_braket('&lt;','&gt;')
-    NLO26x.set_filename('v26x_LO_weight_info.txt')
+    NLO26x.set_filename('26xNLO.log')
     NLO26x.set_startgroup('&lt;weightgroup')
     NLO26x.set_endgroup('&lt;/weightgroup&gt;')
     NLO26x.set_startweight('&lt;weight')
@@ -445,15 +447,19 @@ class group_template:
     def set_end_pdf(self,pdf):
         self.end_pdf=pdf
                     
-def define_set(v242_group_list):##make template
+def define_set(v242_group_list, centralpdf=''):##make template
     groups=[]
 
     for v242group in v242_group_list:
         group=group_template()
         #pdf_list.append(group.weights[0].pdf)
         group.set_start_pdf(v242group.weights[0].pdf)
+        if v242group.weights[0].pdf=='' and bool(v242group.isscale) :
+             group.set_start_pdf(centralpdf)
         group.set_npdf(len(v242group.weights))
         group.set_title(v242group.title)
+        #        print "group.start_pdf="+group.start_pdf
+        #        print "group.npdf="+str(group.npdf)
         group.set_end_pdf(int(group.start_pdf)+int(group.npdf)-1)
         if "Centralscalevariation" in v242group.title :
             group.set_isscale(1)
@@ -508,17 +514,17 @@ def arrange_with_template(sample,template):
                     continue
                 if bool(group_s.isscale):###this is for NLO242
                     weight_s.pdf=central_pdf
-                #     if( (int(weight_s.pdf) == int(group_t.start_pdf) ) and bool(group_t.isscale) ) :
-                if ( bool(group_s.isscale) and bool(group_t.isscale) ):
-                    info=weightinfo()
-                    info.id=weight_s.id
-                    info.pdf=weight_s.pdf
-                    if( info.pdf==''): info.pdf=group_t.start_pdf
-                    info.muF=weight_s.muF
-                    info.muR=weight_s.muR
-                    info.name="scale_variation_muR_"+str(weight_s.muR)+"_muF_"+str(weight_s.muF)
-                    weightlist.append(info)
-                
+                    #     if( (int(weight_s.pdf) == int(group_t.start_pdf) ) and bool(group_t.isscale) ) :
+                    if ( bool(group_t.isscale) ):
+                        info=weightinfo()
+                        info.id=weight_s.id
+                        info.pdf=weight_s.pdf
+                        if( info.pdf==''): info.pdf=group_t.start_pdf
+                        info.muF=weight_s.muF
+                        info.muR=weight_s.muR
+                        info.name="scale_variation_muR_"+str(weight_s.muR)+"_muF_"+str(weight_s.muF)
+                        weightlist.append(info)
+                        #                        print info.id
                 elif( (int(weight_s.pdf) >= int(group_t.start_pdf)) and (int(weight_s.pdf) <= int(group_t.end_pdf)) ):
                     #                    print "pdf replica"+weight_s.name
                     info=weightinfo()
@@ -530,6 +536,7 @@ def arrange_with_template(sample,template):
                     if info.muR=='' : info.muR='1.0'
                     info.name=group_t.title
                     weightlist.append(info)
+    print "#of weights="+str(len(weightlist))
     return weightlist
 
 
@@ -561,32 +568,47 @@ if __name__ == "__main__":
     #    print_list_cpp(list26x,"LO26x")
 
     NLO242=runNLO242()
-    #    for group in NLO242.Group_list:
-    #        print "##############"
-    #        print group.title
-    #        for weight in group.weights:
-    #            print "###################"
-    #            print "id="+str(weight.id)
-    #            print "pdf="+weight.pdf
-            
-        
-    NLO26x=runNLO26x()
-#    for group in NLO26x.Group_list:
- #       print "###############"
-  #      print group.title
-   #     for weight in group.weights:
-    #        print "pdf="+weight.pdf
-        
-    template=define_set(NLO26x.Group_list)
-    #   for group in template:
-    
-    #      print group.title
-    list242=arrange_with_template(NLO242,template)
+    Nweight242=0
+    for group in NLO242.Group_list:
+#        print "##############"
+ #       print "title="+group.title
+  #      print "start_pdf="+group.weights[0].pdf
+        #print "end_pdf="+group.end_pdf
+   #     print "npdf="+str(len(group.weights))
+        for weight in group.weights:
+            #print "###################"
+            #print "id="+str(weight.id)
+            #print "pdf="+weight.pdf
+            Nweight242+=1
+    print "Nweight242="+str(Nweight242)
 
+    NLO26x=runNLO26x()
+    Nweight26x=0
+    for group in NLO26x.Group_list:
+        #        print "###############"
+        #       print group.title
+        for weight in group.weights:
+            #print "id="+weight.id+"pdf="+weight.pdf
+            Nweight26x+=1
+    print "Nweight26x="+str(Nweight26x)
+    #    template=define_set(NLO26x.Group_list)
+
+    template=define_set(NLO242.Group_list,'306000')
+    #for group in template:
+        #print "##########"
+        #print "title="+group.title
+        #print "start_pdf="+str(group.start_pdf)
+        #print "end_pdf="+str(group.end_pdf)
+        #print "npdf="+str(group.npdf)
+    list242=arrange_with_template(NLO242,template)
+    #    for weight in list242:
+    
+    #       print "id="+weight.id+"name="+weight.name+" pdf="+weight.pdf
     list26x=arrange_with_template(NLO26x,template)
     #   list242=arrange_with_template(NLO242,template)
     #Group_list2=NLO26x.Group_list
     #for group in Group_list2:
     #    print group.title
-    print_list_cpp(list242,"NLO242")
-    print_list_cpp(list26x,"NLO26x")
+#    print_list_cpp(list242,"NLO242")
+ #   print_list_cpp(list26x,"NLO26x")
+
