@@ -605,6 +605,8 @@ if __name__ == "__main__":
     
     #       print "id="+weight.id+"name="+weight.name+" pdf="+weight.pdf
     list26x=arrange_with_template(NLO26x,template)
+    #for weight in list26x:
+    #    print weight.id
     #   list242=arrange_with_template(NLO242,template)
     #Group_list2=NLO26x.Group_list
     #for group in Group_list2:
